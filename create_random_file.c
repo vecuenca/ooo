@@ -49,5 +49,5 @@ int main(int argc, const char* argv[])
 	free(buf);
 	
 	printf("%ld", total_time_elapsed);
-	return total_time_elapsed;
+	return 0;
 }
