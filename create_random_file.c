@@ -6,7 +6,7 @@ int main(int argc, const char* argv[])
 {
 	if (argc != 4)
 	{
-		printf("usage: ./create_random_file filename bytes blocksize");
+		printf("usage: ./create_random_file [filename] [bytes] [blocksize]");
 		exit(1);
 	}
 
@@ -17,7 +17,7 @@ int main(int argc, const char* argv[])
 
 	// Allocate our buffer size
 	char *buf;
-	buf = (char *) malloc(block_size + 1);
+	buf = (char *) malloc(block_size);
 
 	FILE *fp = fopen(filename, "w");
 
@@ -38,7 +38,7 @@ int main(int argc, const char* argv[])
 		
 		// Start timing how long it takes to write to disk
 		write_start_time = getTime();
-		fwrite(buf, 1, block_size, fp);
+		fwrite(buf, 1, bytes_to_write, fp);
 		fflush(fp);
 		total_time_elapsed += (getTime() - write_start_time);
  
@@ -48,6 +48,6 @@ int main(int argc, const char* argv[])
 	fclose(fp);
 	free(buf);
 	
-	printf("%zu", total_time_elapsed);
+	printf("%ld", total_time_elapsed);
 	return total_time_elapsed;
 }

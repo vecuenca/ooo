@@ -1,4 +1,4 @@
-CC = g++
+CC = gcc
 library.o: library.c library.h
 	$(CC) -o library.o -c library.c
  

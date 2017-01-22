@@ -13,7 +13,7 @@ long getTime()
 void random_array(char *array, long bytes)
 {
 	char c;	
-	for (int i; i < bytes; i++) {
+	for (long i = 0; i < bytes; i++) {
 		c = 'A' + (rand() % 26);	
 		array[i] = c;
 	}
