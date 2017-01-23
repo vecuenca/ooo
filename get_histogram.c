@@ -13,8 +13,9 @@ int get_histogram(
 	long *milliseconds,
 	long *total_bytes_read)
 {
-	// Initialize our buffer.
-	char buf[block_size];
+	// Initialize our buffer, we malloc to handle large block_sizes.
+	char *buf;
+	buf = (char *) malloc(block_size);
 	bzero(buf, block_size);
 
 	// Setup variables to be used in our while loop
@@ -25,8 +26,10 @@ int get_histogram(
 	// Begin timing
 	long start_time = getTime();
 
+	printf("hi\n");
+
 	// Iterate until fread returns 0.
-	while (bytes_read = fread(&buf, 1, block_size, file_ptr)) {
+	while (bytes_read = fread(buf, 1, block_size, file_ptr)) {
 		*total_bytes_read = *total_bytes_read + bytes_read;
 
 		// Go through every single character in the buffer.
@@ -43,6 +46,7 @@ int get_histogram(
 	*milliseconds = (getTime() - start_time);
 
 	fclose(file_ptr);
+	free(buf);
 
 	return 0;
 }
@@ -77,7 +81,7 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-	printf("Computed the histogram in %d ms.\n", milliseconds);
+	printf("Computed the histogram in %li ms.\n", milliseconds);
 	printf("File length: %ld\n", filelen);
 
 	int i;
