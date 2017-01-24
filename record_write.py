@@ -7,4 +7,5 @@ print "write rate,block size"
 for total in total_bytes:
   for block_size in block_sizes:
     out = check_output(["./create_random_file", "output.txt", str(total), str(block_size)])
-    print(str(total / int(out)) + "," + str(block_size))
+    seconds = float(out) / 1000
+    print(str(total / seconds) + "," + str(block_size))
