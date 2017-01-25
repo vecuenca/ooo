@@ -26,8 +26,6 @@ int get_histogram(
 	// Begin timing
 	long start_time = getTime();
 
-	printf("hi\n");
-
 	// Iterate until fread returns 0.
 	while (bytes_read = fread(buf, 1, block_size, file_ptr)) {
 		*total_bytes_read = *total_bytes_read + bytes_read;
@@ -81,12 +79,13 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-	printf("Computed the histogram in %li ms.\n", milliseconds);
-	printf("File length: %ld\n", filelen);
+	// printf("Computed the histogram in %li ms.\n", milliseconds);
+	// printf("File length: %ld\n", filelen);
 
-	int i;
-	for(i = 0; i < 26; i++) {
-    	printf("%c : %d\n", 'A' + i, hist[i]);
-	}
-	printf("Data rate: %f Bps\n", (double)filelen/milliseconds * 1000);
+	// int i;
+	// for(i = 0; i < 26; i++) {
+  //   	printf("%c : %d\n", 'A' + i, hist[i]);
+	// }
+	// printf("Data rate: %f Bps\n", (double)filelen/milliseconds * 1000);
+	printf("%f", (double)filelen/milliseconds * 1000);
 }
