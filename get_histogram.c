@@ -40,10 +40,10 @@ int get_histogram(
 			// What to do if not a valid character?
 		}
 	}
+	fclose(file_ptr);
 
 	*milliseconds = (getTime() - start_time);
 
-	fclose(file_ptr);
 	free(buf);
 
 	return 0;
