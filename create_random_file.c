@@ -41,14 +41,15 @@ int main(int argc, const char* argv[])
 		
 		fwrite(buf, 1, bytes_to_write, fp);
 		fflush(fp);
-		total_time_elapsed += (getTime() - write_start_time);
+		
  
 		bytes_written += bytes_to_write;
 	}
 
+	total_time_elapsed = getTime();
 	fclose(fp);
 	free(buf);
 	
-	printf("%ld", total_time_elapsed);
+	printf("%ld", total_time_elapsed - write_start_time);
 	return 0;
 }
