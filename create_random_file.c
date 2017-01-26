@@ -25,6 +25,7 @@ int main(int argc, const char* argv[])
 	long total_time_elapsed = 0;
 	long bytes_to_write, write_start_time;
 	
+	write_start_time = getTime();
 	while (bytes_written < total_bytes) {
 		
 		if (total_bytes - bytes_written < block_size) {
@@ -37,7 +38,7 @@ int main(int argc, const char* argv[])
 		random_array(buf, bytes_to_write);
 		
 		// Start timing how long it takes to write to disk
-		write_start_time = getTime();
+		
 		fwrite(buf, 1, bytes_to_write, fp);
 		fflush(fp);
 		total_time_elapsed += (getTime() - write_start_time);
