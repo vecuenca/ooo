@@ -15,3 +15,11 @@ void fixed_len_write(Record *record, void *buf) {
         buf = (char *) buf + sizeof(V);
     }
 }
+
+void fixed_len_read(void *buf, int size, Record *record) {
+    assert(size == fixed_len_sizeof(record));
+
+    for (int i = 0; i < size / sizeof(V)) {
+        memcpy((char *) record->at(i), (char *) buf + sizeof(V) * i, sizeof(V));
+    }
+}
