@@ -84,17 +84,7 @@ int add_fixed_len_page(Page *page, Record *r) {
 	// find first available slot?
 	for (int i = 0; i < fixed_len_page_capacity(page); i++) {
 		int slot_offset = i * page->slot_size;
-		if (data[slot_offset] == '\0') {
-			// create buf to read record into
-			char[] record_buf = new char[fixed_len_sizeof(r)];
-
-			// null terminate buf to ensure no problems
-			memset(record_buf, '\0', sizeof(char) * fixed_len_sizeof(r));
-			fixed_len_write(r, record_buf);
-			memcpy(page->data, record_buf, fixed_len_sizeof(r));
-
-			return slot_offset;
-		}
+		write_fixed_len_page(page, i, r)
 	}
 	return -1;
 }
@@ -103,5 +93,24 @@ int add_fixed_len_page(Page *page, Record *r) {
  * Write a record into a given slot.
  */
 int write_fixed_len_page(Page *page, int slot, Record *r) {
-	return 0;
+	if (fixed_len_page_freeslots(page) < 1) {
+		return -1;
+	}
+
+	int slot_offset = slot * page->slot_size;
+	if (data[slot_offset] == '\0') {
+		// create buf to read record into
+		char[] record_buf = new char[fixed_len_sizeof(r)];
+
+		// null terminate buf to ensure no problems
+		memset(record_buf, '\0', sizeof(char) * fixed_len_sizeof(r));
+		fixed_len_write(r, record_buf);
+		memcpy(page->data, record_buf, fixed_len_sizeof(r));
+
+		return slot_offset;
+	} else {
+		return -1;
+	}
 }
+
+int write_to_
