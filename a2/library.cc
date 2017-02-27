@@ -1,3 +1,5 @@
+// LICENSE: hey no use for skool work
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -101,5 +103,5 @@ int add_fixed_len_page(Page *page, Record *r) {
  * Write a record into a given slot.
  */
 int write_fixed_len_page(Page *page, int slot, Record *r) {
-
+	return 0;
 }
