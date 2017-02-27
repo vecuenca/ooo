@@ -16,10 +16,7 @@ int fixed_len_sizeof(Record *record) {
 }
 
 void fixed_len_write(Record *record, void *buf) {
-    for (Record::iterator i = record->begin(); i != record->end(); i++) {
-        memcpy(buf, *i, sizeof(V));
-        buf = (char *) buf + sizeof(V);
-    }
+    
 }
 
 void fixed_len_read(void *buf, int size, Record *record) {
