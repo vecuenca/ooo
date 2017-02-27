@@ -16,7 +16,7 @@ int fixed_len_sizeof(Record *record) {
 }
 
 void fixed_len_write(Record *record, void *buf) {
-    
+	return;
 }
 
 void fixed_len_read(void *buf, int size, Record *record) {
@@ -63,8 +63,4 @@ int add_fixed_len_page(Page *page, Record *r) {
 	if (sizeof(V) 	< 1) {
 		return -1;
 	}
-
-
-
-
 }
