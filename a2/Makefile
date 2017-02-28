@@ -30,3 +30,6 @@ select2: select2.cc library.o
  
 select3: select3.cc library.o
 	$(CC) -o $@ $< library.o
+
+write_fixed_len_page: write_fixed_len_page.cc library.o
+	$(CC) -o $@ $< library.o
