@@ -5,20 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <string.h>
-typedef const char* V;
-typedef std::vector<V> Record;
-
-typedef struct {
-    void *data;
-    int page_size;
-    int slot_size;
-} Page;
-
-// We assume that there is only one table schema. 
-// 100 attributes, each attribute is 10 bytes each. 
-// So, records in the table are fixed length.
-const int ATTR_NUM  = 100;
-const int ATTR_SIZE = 10;
+#include "library.h"
 
 /**
  * Compute number of bytes required to serialize record
@@ -63,7 +50,6 @@ int fixed_len_page_capacity(Page *page) {
 	return page->page_size / page->slot_size;
 }	
 
-
 /**
  * Calculate the number of free slots in the page
  */
@@ -79,7 +65,6 @@ int fixed_len_page_freeslots(Page *page) {
 
 	return num_free_slots;
 }
-
 
 /**
  * Write a record into a given slot.
@@ -114,10 +99,6 @@ int write_fixed_len_page(Page *page, int slot, Record *r) {
  * -1 if unsuccessful (page is FULL)
  */
 int add_fixed_len_page(Page *page, Record *r) {
-	// printf("BEFORE:\n");
-	// printf("page_capacity: %d\n", fixed_len_page_capacity(page));
-	// printf("num_free_slots: %d\n", fixed_len_page_freeslots(page));
-	// printf("\n");
 	if (fixed_len_page_freeslots(page) < 1) {
 		return -1;
 	}
@@ -134,12 +115,6 @@ int add_fixed_len_page(Page *page, Record *r) {
 			return slot_offset;
 		}
 	}
-
-
-	// printf("AFTER:\n");
-	// printf("page_capacity: %d\n", fixed_len_page_capacity(page));
-	// printf("num_free_slots: %d\n", fixed_len_page_freeslots(page));
-	// printf("\n");
 
 	return -1;
 }

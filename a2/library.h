@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <string.h>
+
 typedef const char* V;
 typedef std::vector<V> Record;
 
@@ -14,6 +15,9 @@ typedef struct {
     int page_size;
     int slot_size;
 } Page;
+
+static int ATTR_NUM  = 100;
+static int ATTR_SIZE = 10;
 
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 int add_fixed_len_page(Page *page, Record *r);

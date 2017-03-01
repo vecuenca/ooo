@@ -8,9 +8,6 @@
 
 #include "library.h"
 
-const int ATTR_NUM  = 100;
-const int ATTR_SIZE = 10;
-
 // http://stackoverflow.com/questions/236129/split-a-string-in-c
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {
@@ -43,23 +40,27 @@ int main(int argc, const char *argv[])
     long page_size = strtol(argv[3], NULL, 10);
     int slot_size = ATTR_NUM * ATTR_SIZE;
 
+    // Open our csv & page FPs
     FILE *csv_file_ptr = fopen(csv_file_name, "r");
     FILE *page_file_ptr = fopen(page_file_name, "w");
 
     char *line = new char[slot_size];
-    std::vector<std::string> row;
+    std::vector<std::string> attributes_in_line;
     Record *record = new Record();
     Page *page = new Page();
     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
+
+    // For each line read from the CSV
     while (fgets(line, slot_size, csv_file_ptr) != NULL) {
-        row = split(line, ',');
+        attributes_in_line = split(line, ',');
         record = new Record();
 
-        // For each column in the row, we add it to the record.
-        for (int i = 0; i < row.size(); i++) {
-            record->push_back(row.at(i).c_str());
+        // For each column in the attributes_in_line, we add it to the record.
+        for (int i = 0; i < attributes_in_line.size(); i++) {
+            record->push_back(attributes_in_line.at(i).c_str());
         }
 
+        // Try to add record into new page
         int success = add_fixed_len_page(page, record);
         if (success < 0) {
             // Write out
@@ -77,9 +78,5 @@ int main(int argc, const char *argv[])
 
     fclose(csv_file_ptr);
     fclose(page_file_ptr);
-
-    printf("%s\n", csv_file_name);
-    printf("%s\n", page_file_name);
-    printf("%li\n", page_size);
 }
 
