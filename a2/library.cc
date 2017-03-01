@@ -97,6 +97,7 @@ int write_fixed_len_page(Page *page, int slot, Record *r) {
 		// null terminate buf to ensure no problems
 		memset(record_buf, '\0', sizeof(char) * fixed_len_sizeof(r));
 		fixed_len_write(r, record_buf);
+
 		memcpy(((char *) page->data) + slot_offset, record_buf, fixed_len_sizeof(r));
 
 		free(record_buf);
@@ -125,7 +126,7 @@ int add_fixed_len_page(Page *page, Record *r) {
 	for (int i = 0; i < fixed_len_page_capacity(page); i++) {
 		int slot_offset = i * page->slot_size;
 
-		printf("Slot#: %i, %c\n", i, ((char *) page->data)[slot_offset]);
+		// printf("Slot#: %i, %c\n", i, ((char *) page->data)[slot_offset]);
 		if (((char *) page->data)[slot_offset] == '\0') {
 			printf("WRITING: %s\n", r->at(0));
 			write_fixed_len_page(page, i, r);

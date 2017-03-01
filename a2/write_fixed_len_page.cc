@@ -41,18 +41,18 @@ int main(int argc, const char *argv[])
     const char *csv_file_name = argv[1];
     const char *page_file_name = argv[2];
     long page_size = strtol(argv[3], NULL, 10);
+    int slot_size = ATTR_NUM * ATTR_SIZE;
 
     FILE *csv_file_ptr = fopen(csv_file_name, "r");
     FILE *page_file_ptr = fopen(page_file_name, "w");
 
-    char *line = new char[ATTR_NUM * ATTR_SIZE];
+    char *line = new char[slot_size];
     std::vector<std::string> row;
     Record *record = new Record();
     Page *page = new Page();
     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
-    while (fgets(line, ATTR_NUM * ATTR_SIZE, csv_file_ptr) != NULL) {
+    while (fgets(line, slot_size, csv_file_ptr) != NULL) {
         row = split(line, ',');
-        
         record = new Record();
 
         // For each column in the row, we add it to the record.
@@ -61,27 +61,20 @@ int main(int argc, const char *argv[])
         }
 
         int success = add_fixed_len_page(page, record);
-        printf("Success: %d\n", success);
-        // if (!success) {
-        //     printf("FAILLLLLLLLed");
-        // }
-        // if (!success) {
-        //     // Page is full, dump to page_file.
-        //     fwrite((char *) page->data, 1, ATTR_SIZE * ATTR_NUM, page_file_ptr);
-        //     fflush(page_file_ptr);
+        if (success < 0) {
+            // Write out
+            fwrite((char *) page->data, sizeof(char), page_size, page_file_ptr);
+            
+            // Initialize new page
+            page = new Page();
+            init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
 
-        //     // initialize new page
-        //     page = new Page();
-        //     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
-
-        //     add_fixed_len_page(page, record);
-        // }
-
-        for (int i = 0; i < record->size(); i++) {
-            // printf("%s", record->at(i));
-            // printf("\n");
+            // Add record into new page.
+            add_fixed_len_page(page, record);
         }
     }
+    fwrite((char *) page->data, sizeof(char), page_size, page_file_ptr);
+
     fclose(csv_file_ptr);
     fclose(page_file_ptr);
 
