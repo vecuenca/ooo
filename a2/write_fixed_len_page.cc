@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
     const char *csv_file_name = argv[1];
     const char *page_file_name = argv[2];
     long page_size = strtol(argv[3], NULL, 10);
-    int slot_size = ATTR_NUM * ATTR_SIZE;
+    int slot_size = (ATTR_NUM * ATTR_SIZE) + 99 + 2; // + 99 because CSVs will have 99 commas. + 1 for null byte +1 for new line
 
     // Open our csv & page FPs
     FILE *csv_file_ptr = fopen(csv_file_name, "r");
@@ -52,13 +52,17 @@ int main(int argc, const char *argv[])
 
     // For each line read from the CSV
     while (fgets(line, slot_size, csv_file_ptr) != NULL) {
+        printf("line: %s", line);
         attributes_in_line = split(line, ',');
         record = new Record();
 
         // For each column in the attributes_in_line, we add it to the record.
+        printf("\nstart\n");
         for (int i = 0; i < attributes_in_line.size(); i++) {
+            printf("%s", attributes_in_line.at(i).c_str());
             record->push_back(attributes_in_line.at(i).c_str());
         }
+        printf("\nstop\n");
 
         // Try to add record into new page
         int success = add_fixed_len_page(page, record);
