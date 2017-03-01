@@ -47,33 +47,40 @@ int main(int argc, const char *argv[])
 
     char *line = new char[ATTR_NUM * ATTR_SIZE];
     std::vector<std::string> row;
-    Record *record;
+    Record *record = new Record();
     Page *page = new Page();
     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
     while (fgets(line, ATTR_NUM * ATTR_SIZE, csv_file_ptr) != NULL) {
         row = split(line, ',');
         
+        record = new Record();
+
         // For each column in the row, we add it to the record.
         for (int i = 0; i < row.size(); i++) {
             record->push_back(row.at(i).c_str());
         }
 
         int success = add_fixed_len_page(page, record);
-        if (!success) {
-            // Page is full, dump to page_file.
-            fwrite((char *) page->data, 1, ATTR_SIZE * ATTR_NUM, page_file_ptr);
-            fflush(page_file_ptr);
-
-            // initialize new page
-            page = new Page();
-            init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
-
-            add_fixed_len_page(page, record);
-        }
-
-        // for (int i = 0; i < record.size(); i++) {
-        //     printf("%s", record.at(i).c_str());
+        printf("Success: %d\n", success);
+        // if (!success) {
+        //     printf("FAILLLLLLLLed");
         // }
+        // if (!success) {
+        //     // Page is full, dump to page_file.
+        //     fwrite((char *) page->data, 1, ATTR_SIZE * ATTR_NUM, page_file_ptr);
+        //     fflush(page_file_ptr);
+
+        //     // initialize new page
+        //     page = new Page();
+        //     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
+
+        //     add_fixed_len_page(page, record);
+        // }
+
+        for (int i = 0; i < record->size(); i++) {
+            // printf("%s", record->at(i));
+            // printf("\n");
+        }
     }
     fclose(csv_file_ptr);
     fclose(page_file_ptr);

@@ -70,11 +70,13 @@ int fixed_len_page_capacity(Page *page) {
 int fixed_len_page_freeslots(Page *page) {
 	char *data = (char *) page->data;
 	int num_free_slots = 0;
+
 	for (int i = 0; i < fixed_len_page_capacity(page); i++) {
 		if (data[i * page->slot_size] == '\0') {
 			num_free_slots += 1;
 		}
 	}
+
 	return num_free_slots;
 }
 
@@ -95,7 +97,7 @@ int write_fixed_len_page(Page *page, int slot, Record *r) {
 		// null terminate buf to ensure no problems
 		memset(record_buf, '\0', sizeof(char) * fixed_len_sizeof(r));
 		fixed_len_write(r, record_buf);
-		memcpy(page->data, record_buf, fixed_len_sizeof(r));
+		memcpy(((char *) page->data) + slot_offset, record_buf, fixed_len_sizeof(r));
 
 		free(record_buf);
 
@@ -111,6 +113,10 @@ int write_fixed_len_page(Page *page, int slot, Record *r) {
  * -1 if unsuccessful (page is FULL)
  */
 int add_fixed_len_page(Page *page, Record *r) {
+	// printf("BEFORE:\n");
+	// printf("page_capacity: %d\n", fixed_len_page_capacity(page));
+	// printf("num_free_slots: %d\n", fixed_len_page_freeslots(page));
+	// printf("\n");
 	if (fixed_len_page_freeslots(page) < 1) {
 		return -1;
 	}
@@ -118,7 +124,21 @@ int add_fixed_len_page(Page *page, Record *r) {
 	// find first available slot?
 	for (int i = 0; i < fixed_len_page_capacity(page); i++) {
 		int slot_offset = i * page->slot_size;
-		write_fixed_len_page(page, i, r);
+
+		printf("Slot#: %i, %c\n", i, ((char *) page->data)[slot_offset]);
+		if (((char *) page->data)[slot_offset] == '\0') {
+			printf("WRITING: %s\n", r->at(0));
+			write_fixed_len_page(page, i, r);
+			printf("AFTER INSERTION: %s\n", (char *) page->data);
+			return slot_offset;
+		}
 	}
+
+
+	// printf("AFTER:\n");
+	// printf("page_capacity: %d\n", fixed_len_page_capacity(page));
+	// printf("num_free_slots: %d\n", fixed_len_page_freeslots(page));
+	// printf("\n");
+
 	return -1;
 }
