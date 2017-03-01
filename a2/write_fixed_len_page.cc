@@ -5,8 +5,18 @@
 #include <sstream>
 #include <vector>
 #include <iterator>
+#include <math.h>
+#include <sys/timeb.h>
 
 #include "library.h"
+
+long getTime()
+{
+    struct timeb t;
+    ftime(&t);
+        
+	return t.time * 1000 + t.millitm;
+}
 
 // http://stackoverflow.com/questions/236129/split-a-string-in-c
 template<typename Out>
@@ -49,20 +59,23 @@ int main(int argc, const char *argv[])
     Record *record = new Record();
     Page *page = new Page();
     init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
+    int num_records = 0;
+    int num_pages = 1;
+
+    // Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
 
     // For each line read from the CSV
     while (fgets(line, slot_size, csv_file_ptr) != NULL) {
-        printf("line: %s", line);
         attributes_in_line = split(line, ',');
         record = new Record();
+        num_records += 1;
 
         // For each column in the attributes_in_line, we add it to the record.
-        printf("\nstart\n");
         for (int i = 0; i < attributes_in_line.size(); i++) {
-            printf("%s", attributes_in_line.at(i).c_str());
             record->push_back(attributes_in_line.at(i).c_str());
         }
-        printf("\nstop\n");
 
         // Try to add record into new page
         int success = add_fixed_len_page(page, record);
@@ -73,6 +86,7 @@ int main(int argc, const char *argv[])
             // Initialize new page
             page = new Page();
             init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
+            num_pages += 1;
 
             // Add record into new page.
             add_fixed_len_page(page, record);
@@ -82,5 +96,11 @@ int main(int argc, const char *argv[])
 
     fclose(csv_file_ptr);
     fclose(page_file_ptr);
+
+    total_time_elapsed = getTime();
+
+    printf("NUMBER OF RECORDS: %i\n", num_records);
+    printf("NUMBER OF PAGES: %i\n", num_pages);
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
 
