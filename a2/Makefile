@@ -33,3 +33,6 @@ select3: select3.cc library.o
 
 write_fixed_len_page: write_fixed_len_page.cc library.o
 	$(CC) -o $@ $< library.o
+
+read_fixed_len_page: read_fixed_len_page.cc library.o
+	$(CC) -o $@ $< library.o
