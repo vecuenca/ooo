@@ -48,7 +48,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
  */
 int fixed_len_page_capacity(Page *page) {
 	return page->page_size / page->slot_size;
-}	
+}
 
 /**
  * Calculate the number of free slots in the page
@@ -115,4 +115,72 @@ int add_fixed_len_page(Page *page, Record *r) {
 	}
 
 	return -1;
+}
+
+// --------------------
+// HEAP-Related methods
+// --------------------
+
+/**
+ * Initalize a heapfile to use the file and page size given.
+ * Assumptions: read & write access. 
+ */
+void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
+	heapfile->file_ptr = file;
+	heapfile->page_size = page_size;
+};
+
+/**
+ * Allocate another page in the heapfile.  This grows the file by a page.
+ */
+PageID alloc_page(Heapfile *heapfile) {
+	// Initialize a new page with nulls
+	Page *page = new Page();
+	init_fixed_len_page(page, heapfile->page_size, ATTR_NUM * ATTR_SIZE);
+
+	// Seek to the end of the file
+	fseek(heapfile->file_ptr, 0L, SEEK_END);
+	int heap_file_size = ftell(heapfile->file_ptr);
+
+	// Write your new page out
+	fwrite((char *) page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+	// rewind our file-pointer, since it's currently at the end.
+	rewind(heapfile->file_ptr);
+
+	return heap_file_size / heapfile->page_size;
+}
+
+/**
+ * Read a page into memory
+ */
+void read_page(Heapfile *heapfile, PageID pid, Page *page) {
+	// Initialize a new page with nulls
+	page = new Page();
+	init_fixed_len_page(page, heapfile->page_size, ATTR_NUM * ATTR_SIZE);
+
+	// Seek to the pageId
+	fseek(heapfile->file_ptr, 0L, pid * heapfile->page_size);
+
+	// Read the page
+	fread(page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+	// rewind our file-pointer, since it's currently at the end.
+	rewind(heapfile->file_ptr);
+}
+
+/**
+ * Write a page from memory to disk
+ */
+void write_page(Page *page, Heapfile *heapfile, PageID pid) {
+	char* data = (char *) page->data;
+
+	// Seek to the pageId
+	fseek(heapfile->file_ptr, 0L, pid * heapfile->page_size);
+
+	// write the page
+	fwrite(data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+	// rewind our file-pointer, since it's currently at the end.
+	rewind(heapfile->file_ptr);
 }
