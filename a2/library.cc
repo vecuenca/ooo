@@ -306,15 +306,15 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	rewind(heapfile->file_ptr);
 }
 
-// class PageIterator {
-// 	public:
-// 		PageIterator(Page *page);
-// 		Record next();
-// 		bool hasNext();
-// 	private:
-// 		Page *page;
-// 		int current_slot;
-// };
+class PageIterator {
+	public:
+		PageIterator(Page *page);
+		Record next();
+		bool hasNext();
+	private:
+		Page *page;
+		int current_slot;
+};
 
 // PageIterator::PageIterator(Page *page) {
 // 	page = page;
