@@ -30,12 +30,17 @@ int main(int argc, const char *argv[]) {
 	const char *page_file_name = argv[1];
 	long page_size = strtol(argv[2], NULL, 10);
 	FILE *page_file_ptr = fopen(page_file_name, "r");
-	char *record_str = new char[ATTR_NUM * ATTR_SIZE];
+	char *record_str = new char[ATTR_NUM * ATTR_SIZE + 1];
 
-	// read one record at a time
+	// read one record (1K bytes) at a time
 	while(fgets(record_str, ATTR_SIZE * ATTR_NUM, page_file_ptr) != NULL) {
-		// split into 10 byte attrs split by commas
-		std::string comma_string = tokenize(record_str);
-		printf("%s\n", comma_string);
+		
+		// iterate over record in 10 byte increments 
+		for (int i = 0; i < ATTR_NUM; i++) {
+			// print out each attribute
+			printf("%.*s", ATTR_SIZE, (record_str + i * ATTR_SIZE));
+			if (i != ATTR_NUM - 1) printf(",");
+		}
+		printf("\n");
 	}
 }
