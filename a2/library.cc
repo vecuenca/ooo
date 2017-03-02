@@ -8,6 +8,7 @@
 #include <string>
 #include <math.h>
 #include <sys/timeb.h>
+#include <sstream>
 
 #include "library.h"
 
@@ -353,6 +354,28 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 // 		bool _hasNextPage();
 // 		bool _hasNextRecordInCurrentPage();
 // };
+
+HeapDirectoryIterator::HeapDirectoryIterator(Heapfile *heap) {
+	heap = heap;
+	directory_page = new Page;
+
+	// load first directory page into directory page
+	init_fixed_len_page(directory_page, heap->page_size, ATTR_NUM * ATTR_SIZE);
+}
+
+Page HeapDirectoryIterator::next() {
+	assert(hasNext());
+
+}
+
+bool HeapDirectoryIterator::hasNext() {
+	// read first record current dir page
+	Record *dir_record;
+	fixed_len_read(directory_page->data, ATTR_NUM * ATTR_SIZE, dir_record);
+
+	// check the 0th attr of the record vector
+	return dir_record->at(0) == HAS_NEXT_DIRECTORY;
+}
 
 // RecordIterator::RecordIterator(Heapfile *heapfile) {
 // 	heap = heapfile;

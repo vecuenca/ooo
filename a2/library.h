@@ -45,3 +45,14 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid);
 
 // misc timing methods
 long getTime();
+
+// iterators
+class HeapDirectoryIterator {
+    public:
+        HeapDirectoryIterator(Heapfile *heapfile);
+        bool hasNext();
+        Page next();
+    private:
+        Heapfile heap;
+        Page *directory_page;
+};
