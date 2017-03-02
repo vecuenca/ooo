@@ -372,9 +372,17 @@ HeapDirectoryIterator::HeapDirectoryIterator(Heapfile *heap) {
 	init_fixed_len_page(directory_page, heap->page_size, ATTR_NUM * ATTR_SIZE);
 }
 
-Page HeapDirectoryIterator::next() {
-	assert(hasNext());
+Page *HeapDirectoryIterator::next() {
+	// sanity check
+	assert(hasNext());	
 
+	// advance file ptr to next dir page
+	fseek(heap.file_ptr, heap.page_size, SEEK_CUR);
+
+	// read current ptr pos into directory page
+	fread(directory_page->data, heap->page_size, 1, heap->file_ptr);
+
+	return directory_page;
 }
 
 bool HeapDirectoryIterator::hasNext() {

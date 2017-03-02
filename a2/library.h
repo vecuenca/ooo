@@ -51,7 +51,7 @@ class HeapDirectoryIterator {
     public:
         HeapDirectoryIterator(Heapfile *heapfile);
         bool hasNext();
-        Page next();
+        Page *next();
     private:
         Heapfile heap;
         Page *directory_page;
