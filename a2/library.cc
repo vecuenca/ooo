@@ -185,46 +185,49 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	rewind(heapfile->file_ptr);
 }
 
-// whoops iterator should be defined like this https://www.tutorialspoint.com/cplusplus/cpp_constructor_destructor.htm
-// class RecordIterator {
-//     public:
-//     RecordIterator(Heapfile *heapfile) {
-// 		Heapfile *heap = heapfile;
+class RecordIterator {
+    public:
+		RecordIterator(Heapfile *heapfile);
+		Record next();
+		bool hasNext();
+	
+	private:
+		Heapfile *heap;
+		RecordID *current_record;
+		bool _hasNext;
+};
 
-// 		// Initialize our RecordId
-// 		RecordID* current_record = new RecordID();
+RecordIterator::RecordIterator(Heapfile *heapfile) {
+	heap = heapfile;
 
-// 		current_record->page_id = 0;
-// 		current_record->slot = 0;
-// 	}
+	// Initialize our RecordId
+	current_record = new RecordID();
+	current_record->page_id = 0;
+	current_record->slot = 0;
 
-// 	// TODO: this is incomplete
-//     Record next() {
-// 		Page* page;
-// 		Record* record;
-// 		int record_size = fixed_len_sizeof(record);
+	// Check if _hasNext at page_id, slot 0.
 
-// 		// Get appropriate page.
-// 		read_page(heap, current_record->page_id, page);
+}
 
-// 		// Read record from given slot.
-// 		// Note: First time using thie method, might be wrong..
-// 		fixed_len_read((char *) page->data + current_record->slot * record_size, record_size, record);
+Record RecordIterator::next() {
+	Page* page;
+	Record* record;
+	int record_size = fixed_len_sizeof(record);
 
-// 		// TODO: 
-// 		// Check if there's anymore records to be read from this page
-// 		// Otherwise we reset slot to 0 and increment page_id
+	// Get appropriate page.
+	read_page(heap, current_record->page_id, page);
 
-// 		return record;
-// 	}
+	// Read record from given slot.
+	// Note: First time using thie method, might be wrong..
+	fixed_len_read((char *) page->data + current_record->slot * record_size, record_size, record);
 
-// 	// TODO: this is incomplete
-//     bool hasNext() {
-// 		// If there's anymore records to be read from the page
-// 			// return true
-// 		// Else: Check if there are records to be read from next page (also increment our page_id)
-// 			// Increment page_id & read new page
-// 			// If there are records to be read from current page, return true
-// 			// Else return false because pages are continguous => we shouldn't have 2 empty pages in a row.
-// 	}
-// };
+	// TODO: increment recordId if there's a next recordId. set _hasNext = true
+	// otherwise check nextPage and if there's a record, increment pageId and reset recordId. Set _hasNext = true
+	// if there's no next page set _hasNext = false
+
+	return *record;
+}
+
+bool RecordIterator::hasNext() {
+	return _hasNext;
+}
