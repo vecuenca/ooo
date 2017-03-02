@@ -17,6 +17,7 @@ long getTime()
   ftime(&t);
 	return t.time * 1000 + t.millitm;
 }
+
 /**
  * Compute number of bytes required to serialize record
  */
