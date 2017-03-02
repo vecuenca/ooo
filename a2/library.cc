@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <string.h>
+#include <string>
 #include <math.h>
 #include <sys/timeb.h>
 
@@ -128,9 +129,75 @@ int add_fixed_len_page(Page *page, Record *r) {
 	return -1;
 }
 
+
+
 // --------------------
 // HEAP-Related methods
 // --------------------
+
+// Helpers, helps us keep the actual methods easier to read.
+Page* buildEmptyPage(Heapfile *heapfile) {
+	Page *page = new Page();
+
+	init_fixed_len_page(page, heapfile->page_size, ATTR_NUM * ATTR_SIZE);
+
+	return page;
+}
+
+const char* LAST_DIRECTORY = "LAST_DIRECTORY";
+const char* HAS_NEXT_DIRECTORY = "HAS_NEXT_DIRECTORY";
+
+// Each directory page's first row's first attribute indicates whether there's a next directory page.
+// Enables us to keep track of our directory pages as a linked list.
+Record* buildDirectoryMetadata() {
+	Record *record = new Record();
+	record->push_back(LAST_DIRECTORY); // Defaulting our first attribute to be the end of the linkedlist
+
+	return record;
+}
+
+Record* buildDirectoryEntry(int page_offset, int free_space) {
+	Record *record = new Record();
+	record->push_back(std::to_string(page_offset).c_str());
+	record->push_back(std::to_string(free_space).c_str());
+
+	return record;
+}
+
+Page* buildDirectory(Heapfile* heapfile) {
+	Page *page = buildEmptyPage(heapfile);
+	Record *directory_entry = buildDirectoryMetadata();
+
+	// Add metadata to first slot.
+	add_fixed_len_page(page, directory_entry);
+
+	return page;
+}
+
+void getLastDirectory(Heapfile *heapfile, Page* last_directory_page, int *number_of_directory_pages) {
+	Page *page = buildEmptyPage(heapfile);
+	Record *page_first_record;
+
+	while (true) {
+		// Read directory page
+		fread(last_directory_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+		
+		// Read first record of directory page (stores the offset for next Directory, 0 otherwise)
+		fixed_len_read(last_directory_page->data, ATTR_NUM * ATTR_SIZE, page_first_record);
+
+		// Count the number of entries in current directory, we do capacity - freeslots - 1 because every heap directory's first record stores heap metadata.
+		*number_of_directory_pages = *number_of_directory_pages + (fixed_len_page_capacity(last_directory_page) + fixed_len_page_freeslots(last_directory_page) - 1);
+
+		// If first record of directory page is 0, then we're done.
+		if (page_first_record->at(0) == LAST_DIRECTORY) {
+			break;
+		} else {
+			fseek(heapfile->file_ptr, heapfile->page_size, SEEK_CUR);
+		}
+	}
+	
+	rewind(heapfile->file_ptr); // Make sure we reset file ptr back to start of file
+}
 
 /**
  * Initalize a heapfile to use the file and page size given.
@@ -143,24 +210,57 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
 
 /**
  * Allocate another page in the heapfile.  This grows the file by a page.
+ *
+ * Step 1: Add a new entry to the last heap directory page. 
+ * (If it's full, we need to create a new heap directory page)
+ * 
+ * Step 2: Add a new empty page & append it.
  */
 PageID alloc_page(Heapfile *heapfile) {
-	// Initialize a new page with nulls
-	Page *page = new Page();
-	init_fixed_len_page(page, heapfile->page_size, ATTR_NUM * ATTR_SIZE);
+	Page *last_directory_page;
+	int* number_of_directory_pages = 0;
 
-	// Seek to the end of the file
+	// Step 1.1 Get the last directory & make sure there's space to add a new entry
+	getLastDirectory(heapfile, last_directory_page, number_of_directory_pages);
+	if (fixed_len_page_freeslots(last_directory_page) == 0) {
+		// Construct new record for the metadata that indicates there's a new directory.
+		Record *last_directory_page_metadata = new Record();
+		last_directory_page_metadata->push_back(HAS_NEXT_DIRECTORY);
+
+		// Update current last_directory_page point to indicate there's a next directory.
+		write_fixed_len_page(last_directory_page, 0, last_directory_page_metadata);
+
+		// Write last_directory_page to disk.
+		fseek(heapfile->file_ptr, heapfile->page_size * (*number_of_directory_pages - 1), SEEK_SET);
+		fwrite(last_directory_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+		rewind(heapfile->file_ptr);
+
+		// Create the last_directory_page & write it to disk.
+		last_directory_page = buildDirectory(heapfile);
+		fseek(heapfile->file_ptr, 0, SEEK_END);
+		fwrite(last_directory_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+		rewind(heapfile->file_ptr);
+	}
+
+	// Step 1.2 Add a new directory entry for our newly allocated page!
+	Page *data_page = buildEmptyPage(heapfile);
+	Record *heap_directory_entry = buildDirectoryEntry(*number_of_directory_pages, fixed_len_page_freeslots(data_page));
+	add_fixed_len_page(last_directory_page, heap_directory_entry);
+
+	// Step 2: append our newly allocated data page to the last data page.
+	// Seek to the end of the file = last data page
 	fseek(heapfile->file_ptr, 0L, SEEK_END);
-	int heap_file_size = ftell(heapfile->file_ptr);
 
-	// Write your new page out
-	fwrite((char *) page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+	// Write our newly allocated page to disk.
+	fwrite((char *) data_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
 
 	// rewind our file-pointer, since it's currently at the end.
 	rewind(heapfile->file_ptr);
 
-	return heap_file_size / heapfile->page_size;
+	return *number_of_directory_pages;
 }
+
+// THIS SHIT (BELOW) AINT DONE YET.
 
 /**
  * Read a page into memory
@@ -196,49 +296,115 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	rewind(heapfile->file_ptr);
 }
 
-class RecordIterator {
-    public:
-		RecordIterator(Heapfile *heapfile);
-		Record next();
-		bool hasNext();
+// class PageIterator {
+// 	public:
+// 		PageIterator(Page *page);
+// 		Record next();
+// 		bool hasNext();
+// 	private:
+// 		Page *page;
+// 		int current_slot;
+// };
+
+// PageIterator::PageIterator(Page *page) {
+// 	page = page;
+// 	current_slot = 0;
+// }
+
+// Record PageIterator::next() {
+// 	Record *temp_record = new Record();
 	
-	private:
-		Heapfile *heap;
-		RecordID *current_record;
-		bool _hasNext;
-};
+// 	fixed_len_read((char *) page->data + current_slot * page->slot_size, page->slot_size, temp_record);
 
-RecordIterator::RecordIterator(Heapfile *heapfile) {
-	heap = heapfile;
+// 	current_slot += 1;
 
-	// Initialize our RecordId
-	current_record = new RecordID();
-	current_record->page_id = 0;
-	current_record->slot = 0;
+// 	return temp_record;
+// }
 
-	// Check if _hasNext at page_id, slot 0.
 
-}
+// // Assuming that there are no holes.
+// bool PageIterator::hasNext() {
+// 	// Check if we've exceeded the capacity
+// 	if (current_slot >= page->page_size / page->slot_size) {
+// 		return false;
+// 	}
 
-Record RecordIterator::next() {
-	Page* page;
-	Record* record;
-	int record_size = fixed_len_sizeof(record);
+// 	int slot_offset = current_slot * page->slot_size;
+	
+// 	// Attempt to read the next slot.
+// 	if (((char* ) page->data)[slot_offset] == '\0') {
+// 		return false;
+// 	} else {
+// 		return true;
+// 	}
+// }
 
-	// Get appropriate page.
-	read_page(heap, current_record->page_id, page);
+// // Defining a Record iterator
+// class RecordIterator {
+//     public:
+// 		RecordIterator(Heapfile *heapfile);
+// 		Record next();
+// 		bool hasNext();
+	
+// 	private:
+// 		Heapfile *heap;
+// 		RecordID *current_record;
+// 		PageIterator *page_iterator;
+// 		bool _hasNextPage();
+// 		bool _hasNextRecordInCurrentPage();
+// };
 
-	// Read record from given slot.
-	// Note: First time using thie method, might be wrong..
-	fixed_len_read((char *) page->data + current_record->slot * record_size, record_size, record);
+// RecordIterator::RecordIterator(Heapfile *heapfile) {
+// 	heap = heapfile;
 
-	// TODO: increment recordId if there's a next recordId. set _hasNext = true
-	// otherwise check nextPage and if there's a record, increment pageId and reset recordId. Set _hasNext = true
-	// if there's no next page set _hasNext = false
+// 	// Initialize our RecordId
+// 	current_record = new RecordID();
+// 	current_record->page_id = 0;
+// 	current_record->slot = 0;
 
-	return *record;
-}
+// 	// Read page from disk and initialize our page iterator
+// 	Page *page;
+// 	read_page(heap, current_record->page_id, page);
+// 	page_iterator = new PageIterator(page);
+// }
 
-bool RecordIterator::hasNext() {
-	return _hasNext;
-}
+// bool RecordIterator::_hasNextRecordInCurrentPage() {
+// 	return page_iterator->hasNext();
+// }
+
+// bool RecordIterator::_hasNextPage() {
+// 	Page* page;
+// 	read_page(heap, current_record->page_id + 1, page);
+// }
+
+// bool RecordIteartor::_hasRecordInNextPage() {
+
+// }
+
+// Record RecordIterator::next() {
+// 	Page* page;
+// 	Record* record;
+// 	int record_size = fixed_len_sizeof(record);
+
+// 	page = page_iterator->next();
+
+// 	// Read record from given slot.
+// 	// Note: First time using thie method, might be wrong..
+// 	fixed_len_read((char *) page->data + current_record->slot * record_size, record_size, record);
+
+// 	// TODO: increment recordId if there's a next recordId. set _hasNext = true
+// 	// otherwise check nextPage and if there's a record, increment pageId and reset recordId. Set _hasNext = true
+// 	// if there's no next page set _hasNext = false
+
+
+// 	return *record;
+// }
+
+// bool RecordIterator::hasNext() {
+// 	if (_hasNextRecordInCurrentPage() || 
+// 		(_hasNextPage() && _hasRecordInNextPage())) {
+// 		return true;
+// 	} else {
+// 		return false;
+// 	}
+// }
