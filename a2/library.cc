@@ -184,3 +184,47 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	// rewind our file-pointer, since it's currently at the end.
 	rewind(heapfile->file_ptr);
 }
+
+// whoops iterator should be defined like this https://www.tutorialspoint.com/cplusplus/cpp_constructor_destructor.htm
+// class RecordIterator {
+//     public:
+//     RecordIterator(Heapfile *heapfile) {
+// 		Heapfile *heap = heapfile;
+
+// 		// Initialize our RecordId
+// 		RecordID* current_record = new RecordID();
+
+// 		current_record->page_id = 0;
+// 		current_record->slot = 0;
+// 	}
+
+// 	// TODO: this is incomplete
+//     Record next() {
+// 		Page* page;
+// 		Record* record;
+// 		int record_size = fixed_len_sizeof(record);
+
+// 		// Get appropriate page.
+// 		read_page(heap, current_record->page_id, page);
+
+// 		// Read record from given slot.
+// 		// Note: First time using thie method, might be wrong..
+// 		fixed_len_read((char *) page->data + current_record->slot * record_size, record_size, record);
+
+// 		// TODO: 
+// 		// Check if there's anymore records to be read from this page
+// 		// Otherwise we reset slot to 0 and increment page_id
+
+// 		return record;
+// 	}
+
+// 	// TODO: this is incomplete
+//     bool hasNext() {
+// 		// If there's anymore records to be read from the page
+// 			// return true
+// 		// Else: Check if there are records to be read from next page (also increment our page_id)
+// 			// Increment page_id & read new page
+// 			// If there are records to be read from current page, return true
+// 			// Else return false because pages are continguous => we shouldn't have 2 empty pages in a row.
+// 	}
+// };
