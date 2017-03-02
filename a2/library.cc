@@ -130,7 +130,14 @@ int add_fixed_len_page(Page *page, Record *r) {
 	return -1;
 }
 
+/**
+ * Read a record from the page from a given slot.
+ */
+void read_fixed_len_page(Page *page, int slot, Record *r) {
+	int slot_offset = slot * page->slot_size;
 
+	fixed_len_read((char *)(page->data) + slot_offset, fixed_len_sizeof(r), r);
+}
 
 // --------------------
 // HEAP-Related methods
@@ -400,7 +407,7 @@ RecordIterator::RecordIterator(Heapfile *heap) {
 		heap_dir_iter = new HeapDirectoryIterator(heap);
 
 		// record to keep track of where we are
-		current_record          = new RecordID();
+		current_record           = new RecordID();
 		current_record->page_id  = 0;
 		current_record->slot     = 0;
 
@@ -414,6 +421,7 @@ Record RecordIterator::next() {
 	Record* next_record;
 
 	// take current page in directory
+	
 
 
 }
