@@ -349,21 +349,7 @@ class PageIterator {
 // 	}
 // }
 
-// Defining a Record iterator
-class RecordIterator {
-    public:
-		RecordIterator(Heapfile *heapfile);
-		Record next();
-		bool hasNext();
-	
-	private:
-		Heapfile *heap;
-		RecordID *current_record;
-		PageIterator *page_iterator;
-		bool _hasNextPage();
-		bool _hasNextRecordInCurrentPage();
-};
-
+// Iterator for each directory
 HeapDirectoryIterator::HeapDirectoryIterator(Heapfile *heap) {
 	heap = heap;
 	directory_page = new Page;
@@ -380,7 +366,7 @@ Page *HeapDirectoryIterator::next() {
 	fseek(heap.file_ptr, heap.page_size, SEEK_CUR);
 
 	// read current ptr pos into directory page
-	fread(directory_page->data, heap->page_size, 1, heap->file_ptr);
+	fread(directory_page->data, heap.page_size, 1, heap.file_ptr);
 
 	return directory_page;
 }
@@ -392,6 +378,54 @@ bool HeapDirectoryIterator::hasNext() {
 
 	// check the 0th attr of the record vector
 	return dir_record->at(0) == HAS_NEXT_DIRECTORY;
+}
+
+// Iterator for page in a single directory_page
+DirectoryPageIterator::DirectoryPageIterator(Heapfile *heap, Page *page) {
+	heap           = heap;
+	directory_page = page; // current page in this directory
+}
+
+bool DirectoryPageIterator::hasNext() {
+	// djoseudj
+}
+
+Page *DirectoryPageIterator::next() {
+	// kfjlf
+}
+
+// Iterator for each record in a page
+RecordIterator::RecordIterator(Heapfile *heap) {
+		heap = heap;
+		heap_dir_iter = new HeapDirectoryIterator(heap);
+
+		// record to keep track of where we are
+		current_record          = new RecordID();
+		current_record->page_id  = 0;
+		current_record->slot     = 0;
+
+		// load in first directory page to directory page iterator
+		Page *directory_page;
+		read_page(heap, current_record->page_id, directory_page);
+		dir_page_iter = new DirectoryPageIterator(heap, directory_page);
+}
+
+Record RecordIterator::next() {
+	Record* next_record;
+
+	// take current page in directory
+
+
+}
+
+bool RecordIterator::hasNext() {
+	// check if there is next record
+
+	// if not, check if there is a next page in this dir
+
+	// if not, check if there is another directory
+
+	// return false
 }
 
 // RecordIterator::RecordIterator(Heapfile *heapfile) {
