@@ -5,8 +5,18 @@
 #include <stdlib.h>
 #include <vector>
 #include <string.h>
+#include <math.h>
+#include <sys/timeb.h>
+
 #include "library.h"
 
+
+long getTime()
+{
+  struct timeb t;
+  ftime(&t);
+	return t.time * 1000 + t.millitm;
+}
 /**
  * Compute number of bytes required to serialize record
  */
