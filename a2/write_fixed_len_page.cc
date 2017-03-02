@@ -10,14 +10,6 @@
 
 #include "library.h"
 
-long getTime()
-{
-    struct timeb t;
-    ftime(&t);
-        
-	return t.time * 1000 + t.millitm;
-}
-
 // http://stackoverflow.com/questions/236129/split-a-string-in-c
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {

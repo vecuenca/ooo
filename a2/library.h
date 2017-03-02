@@ -42,3 +42,6 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
 PageID alloc_page(Heapfile *heapfile);
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
+
+// misc timing methods
+long getTime();
