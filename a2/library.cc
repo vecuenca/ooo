@@ -417,23 +417,32 @@ RecordIterator::RecordIterator(Heapfile *heap) {
 		dir_page_iter = new DirectoryPageIterator(heap, directory_page);
 }
 
+// assume there is another record to find
 Record RecordIterator::next() {
 	Record* next_record;
+	read_fixed_len_page(current_page, current_record->slot, next_record);
 
-	// take current page in directory
+	// increment curr record pointer
+	current_record->slot += 1;
 	
+	if (current_record->slot >= fixed_len_page_capacity(current_page)) {
+		if (dir_page_iter->hasNext()) {
+			current_page = dir_page_iter->next();
+		} else if (heap_dir_iter->hasNext()) {
+			// get next directory, update curr page to first page of that directory
+		}
+	}
 
-
+	return *next_record;
 }
 
 bool RecordIterator::hasNext() {
-	// check if there is next record
-
-	// if not, check if there is a next page in this dir
-
-	// if not, check if there is another directory
-
-	// return false
+	// check if:
+	//	there are more slots in this page
+	//	if there is another page in this directory
+	//  there is another directory`
+	return (current_record->slot >= fixed_len_page_capacity(current_page)
+	 && !dir_page_iter->hasNext() && !heap_dir_iter->hasNext());
 }
 
 // RecordIterator::RecordIterator(Heapfile *heapfile) {

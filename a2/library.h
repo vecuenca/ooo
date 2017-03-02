@@ -76,6 +76,7 @@ class RecordIterator {
     private:
         Heapfile heap;
         RecordID *current_record;
+        Page *current_page; // current page of directory on
 
         HeapDirectoryIterator *heap_dir_iter;
         DirectoryPageIterator *dir_page_iter;
