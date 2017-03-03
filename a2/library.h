@@ -38,7 +38,7 @@ int fixed_len_sizeof(Record *record);
 void fixed_len_write(Record *record, void *buf);
 
 // Heap file related methods
-void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
+void init_heapfile(Heapfile *heapfile, int page_size, FILE *file, bool create_new_heap_file);
 PageID alloc_page(Heapfile *heapfile);
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
