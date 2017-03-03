@@ -61,43 +61,43 @@ int main(int argc, const char *argv[])
     // Start timing
     long total_time_elapsed = 0;
     long write_start_time = getTime();
+    
+    // For each line read from the CSV
+    while (fgets(line, slot_size, csv_file_ptr) != NULL) {
+        attributes_in_line = split(line, ',');
+        record = new Record();
+        num_records += 1;
 
-    PageID pid = alloc_page(heapfile);
-            // write_page(page, heapfile, pid);
+        // For each column in the attributes_in_line, we add it to the record.
+        for (int i = 0; i < attributes_in_line.size(); i++) {
+            record->push_back(attributes_in_line.at(i).c_str());
+        }
 
-    // // // For each line read from the CSV
-    // while (fgets(line, slot_size, csv_file_ptr) != NULL) {
-    //     attributes_in_line = split(line, ',');
-    //     record = new Record();
-    //     num_records += 1;
-
-    //     // For each column in the attributes_in_line, we add it to the record.
-    //     for (int i = 0; i < attributes_in_line.size(); i++) {
-    //         record->push_back(attributes_in_line.at(i).c_str());
-    //     }
-
-    //     // Try to add record into new page
-    //     int success = add_fixed_len_page(page, record);
-    //     if (success < 0) {
+        // Try to add record into new page
+        int success = add_fixed_len_page(page, record);
+        printf("%s, %i", (char *) page->data + (num_records - 1) * 1000, num_records);
+        if (success < 0) {
+            // printf("im in! writing: %s", page->data);
     //         // Write out
-    //         PageID pid = alloc_page(heapfile);
+            PageID pid = alloc_page(heapfile);
+            // printf("pid: %i", pid);
     // //         printf("6");
-    //         write_page(page, heapfile, pid);
+            // write_page(page, heapfile, pid);
     // //         printf("7");
-    // //         // Initialize new page
-    // //         page = new Page();
-    // //         init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
-    // //         num_pages += 1;
+            // Initialize new page
+            page = new Page();
+            init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
+            num_pages += 1;
 
-    // //         // Add record into new page.
-    // //         add_fixed_len_page(page, record);
-    //     }
-    // }
+            // Add record into new page.
+            add_fixed_len_page(page, record);
+        }
+    }
     // PageID pid = alloc_page(heapfile);
     // write_page(page, heapfile, pid);
 
-    // fclose(csv_file_ptr);
-    // fclose(heap_file_ptr);
+    fclose(csv_file_ptr);
+    fclose(heap_file_ptr);
 
     // total_time_elapsed = getTime();
 
