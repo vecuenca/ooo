@@ -61,11 +61,11 @@ class DirectoryPageIterator {
     public:
         DirectoryPageIterator(Heapfile *heapfile, Page *page);
         bool hasNext();
-        Page *next();
+        Record *next();
     private:
         Heapfile heap;
-        Page *directory_page;
         Page *current_page;
+        RecordID *current_record;
 };
 
 class RecordIterator {
@@ -76,7 +76,8 @@ class RecordIterator {
     private:
         Heapfile heap;
         RecordID *current_record;
-        Page *current_page; // current page of directory on
+        Page *current_page; 
+        Page *current_data_page;
 
         HeapDirectoryIterator *heap_dir_iter;
         DirectoryPageIterator *dir_page_iter;

@@ -152,7 +152,7 @@ Page* buildEmptyPage(Heapfile *heapfile) {
 	return page;
 }
 
-const char* LAST_DIRECTORY = "LAST_DIRECTORY";
+const char* LAST_DIRECTORY     = "LAST_DIRECTORY";
 const char* HAS_NEXT_DIRECTORY = "HAS_NEXT_DIRECTORY";
 
 // Each directory page's first row's first attribute indicates whether there's a next directory page.
@@ -387,29 +387,49 @@ bool HeapDirectoryIterator::hasNext() {
 	return dir_record->at(0) == HAS_NEXT_DIRECTORY;
 }
 
-// Iterator for page in a single directory_page
+// Iterator over records for page in a single directory_page
 DirectoryPageIterator::DirectoryPageIterator(Heapfile *heap, Page *page) {
-	heap           = heap;
-	directory_page = page; // current page in this directory
+	heap = heap;
+
+	// what is pageid used for?
+	current_record          = new RecordID();
+	current_record->page_id = 0;
+	current_record->slot    = 0;
 }
 
 bool DirectoryPageIterator::hasNext() {
-	// djoseudj
+	// check if rest of page has available slot with a record
+	return current_record->slot <= fixed_len_page_capacity(current_page);
 }
 
-Page *DirectoryPageIterator::next() {
-	// kfjlf
+Record *DirectoryPageIterator::next() {
+	// assume there exists a next page
+	Record *next_record;
+	char *data = (char *) current_page->data;
+	// loop through slots for next record, and return it
+	for (int i = current_record->slot; i < fixed_len_page_capacity(current_page); i++) {
+		int slot_offset = i * current_page->slot_size;
+		// is there a record at this slot offset?
+		if (data[slot_offset] != '\0') {
+			fixed_len_read((char *) data + slot_offset, ATTR_NUM * ATTR_SIZE, next_record);
+			//set current record slot 
+			current_record->slot = i;
+			return next_record;
+		}
+	}
 }
 
-// Iterator for each record in a page
+// Iterator over records in a data page
 RecordIterator::RecordIterator(Heapfile *heap) {
-		heap = heap;
-		heap_dir_iter = new HeapDirectoryIterator(heap);
-
 		// record to keep track of where we are
 		current_record           = new RecordID();
 		current_record->page_id  = 0;
 		current_record->slot     = 0;
+
+		heap = heap;
+
+		// initialize directory iterator
+		heap_dir_iter = new HeapDirectoryIterator(heap);
 
 		// load in first directory page to directory page iterator
 		Page *directory_page;
@@ -419,20 +439,26 @@ RecordIterator::RecordIterator(Heapfile *heap) {
 
 // assume there is another record to find
 Record RecordIterator::next() {
+	// record to return
 	Record* next_record;
-	read_fixed_len_page(current_page, current_record->slot, next_record);
-
-	// increment curr record pointer
-	current_record->slot += 1;
-	
-	if (current_record->slot >= fixed_len_page_capacity(current_page)) {
-		if (dir_page_iter->hasNext()) {
-			current_page = dir_page_iter->next();
-		} else if (heap_dir_iter->hasNext()) {
-			// get next directory, update curr page to first page of that directory
+	char *data = (char *) current_page->data;
+	for (int i = current_record->slot; i < fixed_len_page_capacity(current_page); i++) {
+		int slot_offset = i * current_page->slot_size;
+		if (data[slot_offset] != '\0') {
+			fixed_len_read((char *) data + slot_offset, ATTR_NUM * ATTR_SIZE, next_record);
+			//set current record slot 
+			current_record->slot = i;
+			break;
 		}
 	}
-
+	// find next record in current page	
+	if (current_record->slot >= fixed_len_page_capacity(current_page)) {
+		if (dir_page_iter->hasNext()) {
+			current_data_page = dir_page_iter->next();
+		} else if (heap_dir_iter->hasNext()) {
+			// TODO: get next directory, update curr page to first page of that directory
+		}
+	}
 	return *next_record;
 }
 
@@ -441,7 +467,7 @@ bool RecordIterator::hasNext() {
 	//	there are more slots in this page
 	//	if there is another page in this directory
 	//  there is another directory`
-	return (current_record->slot >= fixed_len_page_capacity(current_page)
+	return (current_record->slot <= fixed_len_page_capacity(current_page)
 	 && !dir_page_iter->hasNext() && !heap_dir_iter->hasNext());
 }
 
