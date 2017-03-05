@@ -228,14 +228,6 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file, bool create_ne
 		fwrite(first_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
 
 		rewind(file);
-	} else {
-		// Need to traverse to the right spot.
-		fseek(file, 0, SEEK_END);
-		
-		Page* first_page = buildDirectory(heapfile);
-		fwrite(first_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
-		
-		rewind(file);
 	}
 };
 

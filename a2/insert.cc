@@ -41,12 +41,11 @@ int main(int argc, const char *argv[]) {
     char *line = new char[slot_size];
 
     // open up heapfile
-    FILE *heap_file_ptr = fopen(heapfile_name, "r");
+    FILE *heap_file_ptr = fopen(heapfile_name, "r+");
 
     // initialize heapfile struct
     Heapfile *heapfile = new Heapfile();
-    heapfile->file_ptr    = heap_file_ptr;
-    heapfile->page_size   = page_size;
+    init_heapfile(heapfile, page_size, heap_file_ptr, false);
     
     // setup record for reading
     Record *record = new Record();
@@ -54,6 +53,7 @@ int main(int argc, const char *argv[]) {
 
     // setup page to be added to heapfile
     Page *page = new Page();
+    init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
 
     // read csv line by line, creating a record for each line
     while (fgets(line, slot_size, csv_file_ptr) != NULL) {
