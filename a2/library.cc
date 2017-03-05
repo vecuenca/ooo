@@ -193,7 +193,7 @@ void getLastDirectory(Heapfile *heapfile, Page* last_directory_page, int *number
 		fixed_len_read(last_directory_page->data, ATTR_NUM * ATTR_SIZE, page_first_record);
 
 		// Count the number of entries in current directory, we do capacity - freeslots - 1 because every heap directory's first record stores heap metadata.
-		*number_of_directory_entries = *number_of_directory_entries + (fixed_len_page_capacity(last_directory_page) + fixed_len_page_freeslots(last_directory_page) - 1);
+		*number_of_directory_entries = *number_of_directory_entries + (fixed_len_page_capacity(last_directory_page) - fixed_len_page_freeslots(last_directory_page) - 1);
 
 		printf("\n[Getting Last Directory] %i\n", ++i);
 
@@ -232,6 +232,57 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file, bool create_ne
 	}
 };
 
+// Assuming the next page is a data page.
+void _shuffle_data_pages_down(Heapfile *heapfile) {
+
+	int page_size = heapfile->page_size;
+	int slot_size = ATTR_NUM * ATTR_SIZE;
+
+	Page *page = new Page();
+	init_fixed_len_page(page, page_size, slot_size);
+
+	Page *prev_page = new Page();
+	init_fixed_len_page(prev_page, page_size, slot_size);
+
+	// If we try to read a page and it's empty we go back to where we started
+	// fread(page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+	// fread()
+	if (fread(prev_page->data, sizeof(char), page_size, heapfile->file_ptr) == 0) {
+		fseek(heapfile->file_ptr, 0, SEEK_END);
+	} else {
+		printf("\n[shuffling prev]: %s\n", (char *) prev_page->data);
+		int data_pages_read = 1;
+
+		// Traverse to the end of the file
+		// change to fread
+		while (fread(page->data, sizeof(char), page_size, heapfile->file_ptr) > 0) {
+			data_pages_read += 1;
+			printf("\n[shuffling cur]: %s\n", (char *) page->data);
+			// Pointer is at end of current page, we need to go back to start of current page
+			fseek(heapfile->file_ptr, page_size * -1, SEEK_CUR);
+
+			// Write previous page data to current page
+			fwrite((char *) prev_page->data, sizeof(char), page_size, heapfile->file_ptr);
+
+			// Copy current page data into prev.
+			memcpy(prev_page->data, page->data, page_size);
+
+			// reinitialize current page.
+			init_fixed_len_page(page, page_size, slot_size);
+		}
+
+		if (data_pages_read == 1) {
+			fseek(heapfile->file_ptr, 0, SEEK_END);
+		}
+
+		// Left with one more to write
+		fwrite((char *) prev_page->data, sizeof(char), page_size, heapfile->file_ptr);
+
+		// Go back data_pages_read + 1 data_page, so we end off at where we started.
+		fseek(heapfile->file_ptr, -1 * data_pages_read * page_size + -1* page_size, SEEK_CUR);
+	}
+}
+
 /**
  * Allocate another page in the heapfile.  This grows the file by a page.
  *
@@ -246,10 +297,7 @@ PageID alloc_page(Heapfile *heapfile) {
 
 	// Step 1.1 Get the last directory & make sure there's space to add a new entry
 	getLastDirectory(heapfile, last_directory_page, &number_of_directory_entries);
-
-	// fseek(heapfile->file_ptr, -heapfile->page_size, SEEK_CUR);
-
-	// rewind(heapfile->file_ptr); // Make sure we reset file ptr back to start of file
+	printf("Number of directory entries: %i", number_of_directory_entries);
 
 	if (fixed_len_page_freeslots(last_directory_page) == 0) {
 		printf("in...");
@@ -262,6 +310,8 @@ PageID alloc_page(Heapfile *heapfile) {
 
 		// Write last_directory_page to disk.
 		fwrite(last_directory_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+		_shuffle_data_pages_down(heapfile);
 
 		// Create the last_directory_page & write it to disk.
 		last_directory_page = buildDirectory(heapfile);
@@ -307,7 +357,7 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
 	int number_of_directory_entries = 0;
 
 	rewind(heapfile->file_ptr);
-	
+
 	// We want to advance our file pointer to the last directory
 	getLastDirectory(heapfile, last_directory_page, &number_of_directory_entries);
 	// Seek to the pageId
@@ -335,15 +385,28 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	// We want to advance our file pointer to the last directory
 	getLastDirectory(heapfile, last_directory_page, &number_of_directory_entries);
 
-	// Seek to the pageId
-	fseek(heapfile->file_ptr, (pid * heapfile->page_size) + heapfile->page_size, SEEK_CUR);
+	// printf("write page last directory is: %i", number_of_directory_entries);
 
-	// char *buf = new char[1000];
-	// fread(buf, sizeof(char), 1000, heapfile->file_ptr);
+	printf("num_directories: %d, pid: %d\n", number_of_directory_entries, pid);
+	int directory_capacity = fixed_len_page_capacity(last_directory_page) - 1; // Because metadata takes 1 record
+	double directory_pages_used = ceil(number_of_directory_entries / (double) directory_capacity);
+
+	int offset = (pid * heapfile->page_size) + (directory_pages_used * heapfile->page_size);
+	printf("offset: %i\n", offset);
+
+	// rewind(heapfile->file_ptr);
+
+	// Seek to the pageId
+	fseek(heapfile->file_ptr, offset, SEEK_SET);
+
+	// char *buf = new char[2000];
+	// fread(buf, sizeof(char), 2000, heapfile->file_ptr + offset);
 	// printf("zzza: %s", buf);
 
+	printf("[write_page_content]: %s\n", (char *) page->data);
+
 	// write the page
-	fwrite((char *) page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+	fwrite((char *) page->data, sizeof(char), page->page_size, heapfile->file_ptr);
 
 	// // rewind our file-pointer, since it's currently at the end.
 	rewind(heapfile->file_ptr);	

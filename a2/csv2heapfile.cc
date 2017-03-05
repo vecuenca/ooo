@@ -75,15 +75,14 @@ int main(int argc, const char *argv[])
 
         // Try to add record into new page
         int success = add_fixed_len_page(page, record);
-        printf("%s, %i", (char *) page->data + (num_records - 1) * 1000, num_records);
+        printf("%s, %i", (char *) page->data + ((num_records - 1) % 2) * 1000, num_records);
         if (success < 0) {
-            // printf("im in! writing: %s", page->data);
-    //         // Write out
+            // Write out
             PageID pid = alloc_page(heapfile);
-            // printf("pid: %i", pid);
-    // //         printf("6");
-            // write_page(page, heapfile, pid);
-    // //         printf("7");
+            printf("pid: %i", pid);
+
+            write_page(page, heapfile, pid);
+            
             // Initialize new page
             page = new Page();
             init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
@@ -93,16 +92,17 @@ int main(int argc, const char *argv[])
             add_fixed_len_page(page, record);
         }
     }
-    // PageID pid = alloc_page(heapfile);
-    // write_page(page, heapfile, pid);
+
+    PageID pid = alloc_page(heapfile);
+    write_page(page, heapfile, pid);
 
     fclose(csv_file_ptr);
     fclose(heap_file_ptr);
 
-    // total_time_elapsed = getTime();
+    total_time_elapsed = getTime();
 
-    // printf("NUMBER OF RECORDS: %i\n", num_records);
-    // printf("NUMBER OF PAGES: %i\n", num_pages);
-    // printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
+    printf("NUMBER OF RECORDS: %i\n", num_records);
+    printf("NUMBER OF PAGES: %i\n", num_pages);
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
 
