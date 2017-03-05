@@ -394,14 +394,8 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 	int offset = (pid * heapfile->page_size) + (directory_pages_used * heapfile->page_size);
 	printf("offset: %i\n", offset);
 
-	// rewind(heapfile->file_ptr);
-
 	// Seek to the pageId
 	fseek(heapfile->file_ptr, offset, SEEK_SET);
-
-	// char *buf = new char[2000];
-	// fread(buf, sizeof(char), 2000, heapfile->file_ptr + offset);
-	// printf("zzza: %s", buf);
 
 	printf("[write_page_content]: %s\n", (char *) page->data);
 
@@ -410,6 +404,40 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
 	// // rewind our file-pointer, since it's currently at the end.
 	rewind(heapfile->file_ptr);	
+
+	// Now we need to update our directory record's free space attribute
+	int directory_page_offset = floor(pid / (double) directory_capacity) * heapfile->page_size;
+	double directory_entry_offset = remainder((double) pid, (double) directory_capacity) + 1;
+	printf("[Updating directory page]: %i", directory_page_offset);
+
+	fseek(heapfile->file_ptr, directory_page_offset, SEEK_SET);
+
+	Page* dir_page = buildEmptyPage(heapfile);
+	fread(dir_page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+	Record* entry = new Record();
+	char *buf1 = new char[ATTR_SIZE];
+	char *buf2 = new char[ATTR_SIZE];
+
+	memset(buf1, '\0', ATTR_SIZE);
+	memset(buf2, '\0', ATTR_SIZE);
+
+	snprintf(buf1, ATTR_SIZE, "%d", pid);
+	snprintf(buf2, ATTR_SIZE, "%d", fixed_len_page_freeslots(page));
+	entry->push_back(buf1);
+	entry->push_back(buf2);
+
+	printf("[Accessing directory entry at slot]: %f", directory_entry_offset);
+
+	printf("[new dir_entry!]: <%s, %s>", entry->at(0), entry->at(1));
+
+	write_fixed_len_page(dir_page, directory_entry_offset, entry);
+
+	fseek(heapfile->file_ptr, -1 * heapfile->page_size, SEEK_CUR);
+
+	fwrite((char *) dir_page->data, sizeof(char), page->page_size, heapfile->file_ptr);
+
+	rewind(heapfile->file_ptr);
 }
 
 class PageIterator {
