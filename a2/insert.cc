@@ -2,6 +2,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <sstream>
+
+// http://stackoverflow.com/questions/236129/split-a-string-in-c
+template<typename Out>
+void split(const std::string &s, char delim, Out result) {
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        *(result++) = item;
+    }
+}
+
+// http://stackoverflow.com/questions/236129/split-a-string-in-c
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
+}
+
 
 int main(int argc, const char *argv[]) {
     if (argc != 4) {
@@ -12,7 +33,7 @@ int main(int argc, const char *argv[]) {
     // grab args
     const char *heapfile_name = argv[1];
     const char *csv_file_name = argv[2];
-    long       *page_size     = strtol(argv[3], NULL, 10);
+    long       page_size      = strtol(argv[3], NULL, 10);
     int        slot_size      = (ATTR_NUM * ATTR_SIZE) + 99 + 2;
 
     // open up csv to scan
@@ -23,9 +44,9 @@ int main(int argc, const char *argv[]) {
     FILE *heap_file_ptr = fopen(heapfile_name, "r");
 
     // initialize heapfile struct
-    Heapfile heapfile = new Heap();
-    heap->file_ptr    = heap_file_ptr;
-    heap->page_size   = page_size;
+    Heapfile *heapfile = new Heapfile();
+    heapfile->file_ptr    = heap_file_ptr;
+    heapfile->page_size   = page_size;
     
     // setup record for reading
     Record *record = new Record();
