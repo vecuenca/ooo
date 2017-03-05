@@ -35,6 +35,7 @@ static int ATTR_SIZE = 10;
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 int add_fixed_len_page(Page *page, Record *r);
 int fixed_len_sizeof(Record *record);
+int fixed_len_page_capacity(Page *page);
 void fixed_len_write(Record *record, void *buf);
 
 // Heap file related methods
@@ -42,6 +43,9 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file, bool create_ne
 PageID alloc_page(Heapfile *heapfile);
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
+Page *buildEmptyPage(Heapfile *heapfile);
+void getLastDirectory(Heapfile *heapfile, Page *page, int *num_dir_entries);
+
 
 // misc timing methods
 long getTime();
