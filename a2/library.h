@@ -51,8 +51,34 @@ class HeapDirectoryIterator {
     public:
         HeapDirectoryIterator(Heapfile *heapfile);
         bool hasNext();
-        Page next();
+        Page *next();
     private:
         Heapfile heap;
         Page *directory_page;
+};
+
+class DirectoryPageIterator {
+    public:
+        DirectoryPageIterator(Heapfile *heapfile, Page *page);
+        bool hasNext();
+        Record *next();
+    private:
+        Heapfile heap;
+        Page *current_page;
+        RecordID *current_record;
+};
+
+class RecordIterator {
+    public:
+        RecordIterator(Heapfile *heap);
+        Record next();
+        bool hasNext();
+    private:
+        Heapfile heap;
+        RecordID *current_record;
+        Page *current_page; 
+        Page *current_data_page;
+
+        HeapDirectoryIterator *heap_dir_iter;
+        DirectoryPageIterator *dir_page_iter;
 };
