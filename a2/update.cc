@@ -28,7 +28,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
+    if (argc != 6) {
 		printf("usage: ./update [heapfile] [record_id] [attribute_id] [new_value] [page_size]\n");
     	exit(1);
 	}
