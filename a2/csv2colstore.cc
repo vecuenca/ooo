@@ -60,10 +60,14 @@ int main(int argc, const char *argv[])
     // For each attribute we open a file for it.
     Heapfile **heap_files = (Heapfile **) malloc(sizeof(Heapfile) * ATTR_NUM);
     Page **heap_pages = (Page **) malloc(sizeof(Page) * ATTR_NUM);
+    long *page_free_slots = (long *) malloc(sizeof(long) * ATTR_NUM);
 
     // Setup buffers for filename concatenation
     char *file_name_buffer = new char[1000];
     memset(file_name_buffer, '\0', 1000);
+
+    int record_size = ATTR_SIZE * 2;
+    int max_records_in_page = floor(page_size / (double) record_size);
 
     for (int i = 0; i < ATTR_NUM; i++) {
         // Changing the int to a string
@@ -84,7 +88,8 @@ int main(int argc, const char *argv[])
 
         // For each column we need to setup the page
         heap_pages[i] = buildEmptyPage(heap_files[i]);
-        
+        page_free_slots[i] = max_records_in_page;
+
         memset(file_name_buffer, '\0', 1000);
     }
 
@@ -104,18 +109,16 @@ int main(int argc, const char *argv[])
 
         // For each column in the attributes_in_line, we add it to the record.
         for (int i = 0; i < attributes_in_line.size(); i++) {
-            record = new Record();
-
             char *buf1 = new char[ATTR_SIZE];
             memset(buf1, '\0', ATTR_SIZE);
             snprintf(buf1, ATTR_SIZE, "%d", tuple_id);
 
-            record->push_back(buf1);
-            record->push_back(attributes_in_line.at(i).c_str());
-
-            int success = add_fixed_len_page(heap_pages[i], record);
-
-            if (success < 0) {
+            int slots_used_up = max_records_in_page - page_free_slots[i];
+            if (page_free_slots[i] > 0) {
+                strncpy(((char *) heap_pages[i]->data) + slots_used_up * record_size, buf1, record_size/2);
+                strncpy(((char *) heap_pages[i]->data) + slots_used_up * record_size + ATTR_SIZE, attributes_in_line.at(i).c_str(), record_size/2);
+            } else {
+                // write page out
                 pid = alloc_page(heap_files[i]);
                 write_page(heap_pages[i], heap_files[i], pid);
 
@@ -123,9 +126,13 @@ int main(int argc, const char *argv[])
                 heap_pages[i] = new Page();
                 init_fixed_len_page(heap_pages[i], page_size, ATTR_SIZE * ATTR_NUM);
 
-                // Add record into new page.
-                add_fixed_len_page(heap_pages[i], record);
+                page_free_slots[i] = max_records_in_page;
+
+                strncpy(((char *) heap_pages[i]->data), buf1, record_size/2);
+                strncpy(((char *) heap_pages[i]->data) + ATTR_SIZE, attributes_in_line.at(i).c_str(), record_size/2);
             }
+
+            page_free_slots[i] -= 1;
         }
     }
 
@@ -137,12 +144,14 @@ int main(int argc, const char *argv[])
         fclose(heap_files[i]->file_ptr);
     }
 
-    total_time_elapsed = getTime();
-
     free(heap_files);
     free(heap_pages);
+    free(page_free_slots);
 
     fclose(csv_file_ptr);
     // fclose(heap_file_ptr);
+
+    total_time_elapsed = getTime();
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
 
