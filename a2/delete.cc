@@ -29,7 +29,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-		printf("usage: ./delete [heapfile] [record_id] [page_size]");
+		printf("usage: ./delete [heapfile] [record_id] [page_size]\n");
     	exit(1);
 	}
     long slot_size = ATTR_NUM * ATTR_SIZE;
