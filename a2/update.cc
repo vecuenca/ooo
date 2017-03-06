@@ -90,10 +90,6 @@ int main(int argc, char *argv[]) {
     write_fixed_len_page(page, slot_offset, updated_record);
     write_page(page, heapfile, page_id);
 
-    // seek to record attribute offset, overwrite
-    // fseek(heapfile->file_ptr, slot_size * slot_offset + attr_id * ATTR_SIZE, SEEK_CUR);
-    // fwrite(new_value, sizeof(char), 10 ,heapfile->file_ptr);
-
     fclose(heapfile->file_ptr);
 
     return 0;
