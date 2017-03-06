@@ -75,14 +75,13 @@ int main(int argc, const char *argv[])
 
         // Try to add record into new page
         int success = add_fixed_len_page(page, record);
-        printf("%s, %i", (char *) page->data + ((num_records - 1) % 2) * 1000, num_records);
         if (success < 0) {
             // Write out
             PageID pid = alloc_page(heapfile);
-            printf("pid: %i", pid);
+            printf("writing out page %i\n", pid);
 
             write_page(page, heapfile, pid);
-            
+
             // Initialize new page
             page = new Page();
             init_fixed_len_page(page, page_size, ATTR_SIZE * ATTR_NUM);
@@ -90,6 +89,10 @@ int main(int argc, const char *argv[])
 
             // Add record into new page.
             add_fixed_len_page(page, record);
+
+            FILE* tmp = fopen("" + num_records, "w");
+            fwrite(page, sizeof(char), page_size, tmp);
+            fclose(tmp);
         }
     }
 
