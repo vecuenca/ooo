@@ -35,6 +35,7 @@ static int ATTR_SIZE = 10;
 void fixed_len_read(void *buf, int size, Record *record);
 
 // Page related methods
+void write_fixed_len_page(Page *page, int slot, Record *r);
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 int add_fixed_len_page(Page *page, Record *r);
 int fixed_len_sizeof(Record *record);

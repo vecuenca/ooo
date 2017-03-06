@@ -65,9 +65,34 @@ int main(int argc, char *argv[]) {
     // page_id + 1 because we seek to the last directory page
 	fseek(heapfile->file_ptr, heapfile->page_size * (page_id + 1) ,SEEK_CUR);
 
+    // Read the page into memory.
+    fread(page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+    // Read the record.
+    Record *record = new Record();
+    fixed_len_read(((char *) page->data) + slot_size * slot_offset, ATTR_NUM * ATTR_SIZE, record);
+
+    // Construct the updated record, ensuring to replace the attribute
+    Record *updated_record = new Record();
+    for (int i = 0; i < ATTR_NUM; i++) {
+        if (i != attr_id) {
+            updated_record->push_back(record->at(i));
+        } else {
+            char* new_val = new char[ATTR_SIZE];
+            memset(new_val, '\0', ATTR_SIZE);
+            strncpy(new_val, new_value, ATTR_SIZE);
+            
+            updated_record->push_back(new_val);
+        }
+    }
+
+    // Save our updated record at the given slot and write out to disk.
+    write_fixed_len_page(page, slot_offset, updated_record);
+    write_page(page, heapfile, page_id);
+
     // seek to record attribute offset, overwrite
-    fseek(heapfile->file_ptr, slot_size * slot_offset + attr_id * ATTR_SIZE, SEEK_CUR);
-    fwrite(new_value, sizeof(char), 10 ,heapfile->file_ptr);
+    // fseek(heapfile->file_ptr, slot_size * slot_offset + attr_id * ATTR_SIZE, SEEK_CUR);
+    // fwrite(new_value, sizeof(char), 10 ,heapfile->file_ptr);
 
     fclose(heapfile->file_ptr);
 
