@@ -202,11 +202,8 @@ void getLastDirectory(Heapfile *heapfile, Page* last_directory_page, int *number
 		// Count the number of entries in current directory, we do capacity - freeslots - 1 because every heap directory's first record stores heap metadata.
 		*number_of_directory_entries = *number_of_directory_entries + (fixed_len_page_capacity(last_directory_page) - fixed_len_page_freeslots(last_directory_page) - 1);
 
-		printf("\n[Getting Last Directory] %i\n", ++i);
-		printf("%.*s\n", ATTR_SIZE, page_first_record->at(0));
-
+		i += 1;
 	} while(strncmp(page_first_record->at(0), LAST_DIRECTORY, ATTR_SIZE) != 0);
-	printf("[Last Directory] %i\n", i);
 
 	// Because of fread, our pointer will point to the next page. so we revert it back to
 	// one page before.
