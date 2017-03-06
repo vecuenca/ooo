@@ -116,8 +116,6 @@ int main(int argc, const char *argv[])
             bool is_smaller_than_end = strncmp(attribute_value, end, ATTR_SIZE) <= 0;
 
             if (is_bigger_than_start && is_smaller_than_end) {
-                printf("%.*s\n", 5, attribute_value);
-
                 getLastDirectory(return_attr_heap, return_attr_page, &return_attr_num_dir_pages);
 
                 double data_pages_used = ceil((id + 1) / max_records_in_page);
