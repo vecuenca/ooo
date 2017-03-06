@@ -46,6 +46,10 @@ int main(int argc, const char *argv[])
     
     int slot_size = ATTR_NUM * ATTR_SIZE;
 
+    // Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
+
     // Construct our buffer
     char *file_name_buffer = new char[1000];
     memset(file_name_buffer, '\0', 1000);
@@ -91,30 +95,32 @@ int main(int argc, const char *argv[])
     // Setup Record
     Record* record;
 
+    int record_size = ATTR_SIZE * 2;
+    int max_records_in_page = floor(page_size / (double) record_size);
+
     // read in the entire page
 	while(fread(page->data, sizeof(char), heap->page_size, heap->file_ptr)) {
-        // iterator through records
-        for (int j = 0; j < fixed_len_page_capacity(page); j++) {
-            record = new Record();
+        for (int i = 0; i < max_records_in_page; i++) {
+            // Grabbing the id of this tuple
+            char* id_buf = new char[ATTR_SIZE];
+            memset(id_buf, '\0', ATTR_SIZE);
+            strncpy(id_buf, ((char* ) page->data) + i * record_size, ATTR_SIZE);
+            long id = strtol(id_buf, NULL, 10) - 1; // -1 to make it 0 index
 
-            // deserialize row into a record
-            fixed_len_read(((char* ) page->data) + j * slot_size, slot_size, record);
-            
-            char* id = new char[ATTR_SIZE];
-            strncpy(id, ((char* ) page->data) + j * slot_size, ATTR_SIZE);
-            long id_l = strtol(id, NULL, 10) - 1; // -1 to make it 0 index
-
+            // Grabbing attribute's value
             char* attribute_value = new char[ATTR_SIZE];
-            strncpy(attribute_value, ((char* ) page->data) + j * slot_size + ATTR_SIZE, ATTR_SIZE);
+            memset(attribute_value, '\0', ATTR_SIZE);
+            strncpy(attribute_value, ((char* ) page->data) + i * record_size + ATTR_SIZE, ATTR_SIZE);
 
             bool is_bigger_than_start = strncmp(attribute_value, start, ATTR_SIZE) >= 0;
             bool is_smaller_than_end = strncmp(attribute_value, end, ATTR_SIZE) <= 0;
 
             if (is_bigger_than_start && is_smaller_than_end) {
+                printf("%.*s\n", 5, attribute_value);
+
                 getLastDirectory(return_attr_heap, return_attr_page, &return_attr_num_dir_pages);
-                // We need to lookup that attribute by first reading that page in
-                int data_page_capacity = fixed_len_page_capacity(return_attr_page);
-                double data_pages_used = ceil((id_l + 1) / (double) data_page_capacity);
+
+                double data_pages_used = ceil((id + 1) / max_records_in_page);
                 int offset = page_size + (data_pages_used - 1) * page_size;
 
                 fseek(return_attr_heap->file_ptr, offset, SEEK_CUR);
@@ -122,10 +128,10 @@ int main(int argc, const char *argv[])
 
                 // Then we seek to that record
                 char* ret_attr_val = new char[ATTR_SIZE];
-                strncpy(ret_attr_val, ((char *) return_attr_page->data) + (id_l % data_page_capacity) * slot_size + ATTR_SIZE, ATTR_SIZE);
-                
-                printf("%.*s\n", 5, ret_attr_val);
+                strncpy(ret_attr_val, ((char *) return_attr_page->data) + (id % max_records_in_page) * record_size + ATTR_SIZE, ATTR_SIZE);
 
+                printf("%.*s\n", 5, ret_attr_val);
+                
                 return_attr_page = buildEmptyPage(return_attr_heap);
             }
         }
@@ -133,5 +139,8 @@ int main(int argc, const char *argv[])
 
     fclose(col_file_ptr);
     fclose(b_attr_file_ptr);
+
+    total_time_elapsed = getTime();
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
 
