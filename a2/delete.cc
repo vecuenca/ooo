@@ -63,11 +63,20 @@ int main(int argc, char *argv[]) {
     // page_id + 1 because we seek to the last directory page
 	fseek(heapfile->file_ptr, heapfile->page_size * (page_id + 1),SEEK_CUR);
 
-    // seek to record offset, overwrite
-    fseek(heapfile->file_ptr, slot_size * slot_offset, SEEK_CUR);
-    for (int i = 0; i < ATTR_SIZE * ATTR_NUM; i++) {
-        fwrite("\0", sizeof(char), 1, heapfile->file_ptr);
+    // read page into memory
+    page = buildEmptyPage(heapfile);
+    fread(page->data, sizeof(char), heapfile->page_size, heapfile->file_ptr);
+
+    // Construct an empty record and push it into the page
+    Record *empty_record = new Record();
+    char* empty_string = new char[ATTR_SIZE];
+    memset(empty_string, '\0', ATTR_SIZE);
+    for (int i = 0; i < ATTR_NUM; i++) {
+        empty_record->push_back(empty_string);
     }
+    
+    write_fixed_len_page(page, slot_offset, empty_record);
+    write_page(page, heapfile, page_id);
 
     fclose(heapfile->file_ptr);
 
