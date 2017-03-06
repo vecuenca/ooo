@@ -14,7 +14,12 @@ int main(int argc, const char *argv[]) {
 	long       page_size     = strtol(argv[2], NULL, 10);
 
 	// open up heap to scan
-	FILE *heap_file_ptr = fopen(heapfile_name, "r+");
+	FILE *heap_file_ptr = fopen(heapfile_name, "r");
+
+	if (!heap_file_ptr) {
+		printf("heapfile does not exist. Terminating.\n");
+		return 0;
+	}
 
 	// initialize a heapfile struct
 	Heapfile *heap   = new Heapfile();

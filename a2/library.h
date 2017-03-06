@@ -31,6 +31,9 @@ typedef struct {
 static int ATTR_NUM  = 100;
 static int ATTR_SIZE = 10;
 
+// Record related methods
+void fixed_len_read(void *buf, int size, Record *record);
+
 // Page related methods
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 int add_fixed_len_page(Page *page, Record *r);
