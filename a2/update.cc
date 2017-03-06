@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
     // page_id + 1 because we seek to the last directory page
 	fseek(heapfile->file_ptr, heapfile->page_size * (page_id + 1) ,SEEK_CUR);
 
-    // seek to record offset, overwrite
-    fseek(heapfile->file_ptr, slot_size * slot_offset, SEEK_CUR);
+    // seek to record attribute offset, overwrite
+    fseek(heapfile->file_ptr, slot_size * slot_offset + attr_id * ATTR_SIZE, SEEK_CUR);
     fwrite(new_value, sizeof(char), 10,heapfile->file_ptr);
 
     fclose(heapfile->file_ptr);
