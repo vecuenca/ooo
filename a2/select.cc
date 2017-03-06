@@ -63,4 +63,6 @@ int main(int argc, const char *argv[]) {
             }
 		}
 	}
+
+    fclose(heap_file_ptr);
 }
