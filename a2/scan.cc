@@ -23,8 +23,7 @@ int main(int argc, const char *argv[]) {
 
 	// initialize a heapfile struct
 	Heapfile *heap   = new Heapfile();
-	heap->file_ptr  = heap_file_ptr;
-	heap->page_size = page_size;
+	init_heapfile(heap, page_size, heap_file_ptr, false);
 
 	// go past all directories
 	int num_dir_pages = 0;
