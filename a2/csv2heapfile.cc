@@ -32,7 +32,7 @@ int main(int argc, const char *argv[])
 {
     if (argc != 4)
     {
-        printf("usage: ./csv2heapfile [csv_file] [heapfile] [page_size]");
+        printf("usage: ./csv2heapfile [csv_file] [heapfile] [page_size]\n");
         exit(1);
     }
 
