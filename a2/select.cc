@@ -34,6 +34,10 @@ int main(int argc, const char *argv[]) {
 	int num_dir_pages = 0;
 	Page *page = buildEmptyPage(heap);
 
+	// Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
+
 	// seek to last directory 
 	getLastDirectory(heap, page, &num_dir_pages);
 
@@ -63,6 +67,10 @@ int main(int argc, const char *argv[]) {
             }
 		}
 	}
+
+	total_time_elapsed = getTime();
+
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 
     fclose(heap_file_ptr);
 }

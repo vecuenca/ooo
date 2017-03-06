@@ -50,6 +50,10 @@ int main(int argc, const char *argv[])
         mkdir(colstore_name, 0700);
     }
 
+    // Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
+
     // Open our csv & page FPs
     FILE *csv_file_ptr = fopen(csv_file_name, "r");
 
@@ -132,6 +136,8 @@ int main(int argc, const char *argv[])
 
         fclose(heap_files[i]->file_ptr);
     }
+
+    total_time_elapsed = getTime();
 
     free(heap_files);
     free(heap_pages);
