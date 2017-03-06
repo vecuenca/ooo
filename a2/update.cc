@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     // seek to record attribute offset, overwrite
     fseek(heapfile->file_ptr, slot_size * slot_offset + attr_id * ATTR_SIZE, SEEK_CUR);
-    fwrite(new_value, sizeof(char), 10,heapfile->file_ptr);
+    fwrite(new_value, sizeof(char), 10 ,heapfile->file_ptr);
 
     fclose(heapfile->file_ptr);
 
