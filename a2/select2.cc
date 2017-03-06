@@ -44,6 +44,10 @@ int main(int argc, const char *argv[])
     long        page_size       = strtol(argv[5], NULL, 10);
     int slot_size = ATTR_NUM * ATTR_SIZE;
 
+    // Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
+
     // Construct our buffer
     char *file_name_buffer = new char[1000];
     memset(file_name_buffer, '\0', 1000);
@@ -76,17 +80,15 @@ int main(int argc, const char *argv[])
     // Setup Record
     Record* record;
 
+    int record_size = ATTR_SIZE * 2;
+    int max_records_in_page = floor(page_size / (double) record_size);
+
     // read in the entire page
 	while(fread(page->data, sizeof(char), heap->page_size, heap->file_ptr)) {
-        // iterator through records
-        for (int j = 0; j < fixed_len_page_capacity(page); j++) {
-            record = new Record();
-
-            // deserialize row into a record
-            fixed_len_read(((char* ) page->data) + j * slot_size, slot_size, record);
-            
+        for (int i = 0; i < max_records_in_page; i++) {
             char* attribute_value = new char[ATTR_SIZE];
-            strncpy(attribute_value, ((char* ) page->data) + j * slot_size + ATTR_SIZE, ATTR_SIZE);
+            memset(attribute_value, '\0', ATTR_SIZE);
+            strncpy(attribute_value, ((char* ) page->data) + i * record_size + ATTR_SIZE, ATTR_SIZE);
 
             bool is_bigger_than_start = strncmp(attribute_value, start, ATTR_SIZE) >= 0;
             bool is_smaller_than_end = strncmp(attribute_value, end, ATTR_SIZE) <= 0;
@@ -98,5 +100,8 @@ int main(int argc, const char *argv[])
     }
 
     fclose(col_file_ptr);
+
+    total_time_elapsed = getTime();
+    printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
 
