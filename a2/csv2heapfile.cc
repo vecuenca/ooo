@@ -89,10 +89,6 @@ int main(int argc, const char *argv[])
 
             // Add record into new page.
             add_fixed_len_page(page, record);
-
-            FILE* tmp = fopen("" + num_records, "w");
-            fwrite(page, sizeof(char), page_size, tmp);
-            fclose(tmp);
         }
     }
 
