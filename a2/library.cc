@@ -324,9 +324,6 @@ PageID alloc_page(Heapfile *heapfile) {
 
 	// Step 1.3 Write the entry out to the last directory entry.
 	fwrite(last_directory_page->data, sizeof(char), last_directory_page->page_size, heapfile->file_ptr);
-	FILE *temp = fopen((char *) heap_directory_entry->at(0), "w");
-	fwrite(last_directory_page->data, sizeof(char), last_directory_page->page_size, temp);
-	fclose(temp);
 	
 	// Step 2: append our newly allocated data page to the last data page.
 	// Seek to the end of the file = last data page
