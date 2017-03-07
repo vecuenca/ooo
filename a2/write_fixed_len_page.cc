@@ -74,6 +74,7 @@ int main(int argc, const char *argv[])
         if (success < 0) {
             // Write out
             fwrite((char *) page->data, sizeof(char), page_size, page_file_ptr);
+            fflush(page_file_ptr);
             
             // Initialize new page
             page = new Page();
@@ -85,6 +86,7 @@ int main(int argc, const char *argv[])
         }
     }
     fwrite((char *) page->data, sizeof(char), page_size, page_file_ptr);
+    fflush(page_file_ptr);
 
     fclose(csv_file_ptr);
     fclose(page_file_ptr);

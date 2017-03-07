@@ -27,20 +27,40 @@ int main(int argc, const char *argv[]) {
 		exit(1);
 	}
 
+    // Start timing
+    long total_time_elapsed = 0;
+    long write_start_time = getTime();
+
 	const char *page_file_name = argv[1];
 	long page_size = strtol(argv[2], NULL, 10);
 	FILE *page_file_ptr = fopen(page_file_name, "r");
-	char *record_str = new char[ATTR_NUM * ATTR_SIZE + 1];
 
-	// read one record (1K bytes) at a time
-	while(fgets(record_str, ATTR_SIZE * ATTR_NUM, page_file_ptr) != NULL) {
-		
-		// iterate over record in 10 byte increments 
-		for (int i = 0; i < ATTR_NUM; i++) {
-			// print out each attribute
-			printf("%.*s", ATTR_SIZE, (record_str + i * ATTR_SIZE));
-			if (i != ATTR_NUM - 1) printf(",");
+	Page* page = new Page();
+	init_fixed_len_page(page, page_size, ATTR_NUM * ATTR_SIZE);
+
+	Record* record = new Record();
+
+	int amountRead;
+	char* line_buffer = new char[ATTR_NUM * ATTR_SIZE + 99];
+	
+	while((amountRead = fread(page->data, sizeof(char), page_size, page_file_ptr)) > 0) {
+		printf("%i, %i\n", amountRead, fixed_len_page_capacity(page));
+		for (int i = 0; i < fixed_len_page_capacity(page); i++) {
+			fixed_len_read(((char *) page->data) + i * fixed_len_sizeof(record), fixed_len_sizeof(record), record);
+
+			memset(line_buffer, '\0', ATTR_NUM * ATTR_SIZE + 99);
+			for (int j = 0; j < ATTR_NUM; j++) {
+				// print out each attribute
+				strncat(line_buffer, record->at(j), ATTR_SIZE);
+				if (j != ATTR_NUM - 1) {
+					strncat(line_buffer, ",", 1);
+				}
+
+				printf("%s", line_buffer);
+			}
 		}
-		printf("\n");
 	}
+
+	total_time_elapsed = getTime();
+	printf("Time: %ld milliseconds\n", total_time_elapsed - write_start_time);
 }
